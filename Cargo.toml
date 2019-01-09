@@ -1,7 +1,8 @@
 [package]
-name = "CS165-Project1"
+name = "cs165_project1"
 version = "0.1.0"
 authors = ["Calvin <tacalvin123@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+md5 = "0.6.1"
