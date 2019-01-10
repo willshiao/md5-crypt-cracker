@@ -1,35 +1,19 @@
-use std::mem;
-
-struct Counter {
-    count: usize,
-    cmax: usize
-}
-
-impl Counter {
-    fn new(cmax : usize) -> Counter {
-        Counter { count: 0, cmax: cmax }
-    }
-}
-
 struct WordGenerator {
-    stringLen: usize,
     counts: Vec<usize>,
     vocab: Vec<char>,
-    isStart: bool
+    is_start: bool
 }
 
 impl WordGenerator {
-    fn convertWord(&self) -> String {
+    fn convert_word(&self) -> String {
         self.counts.iter().map(|x| self.vocab[*x]).collect()
     }
 
-    fn new(targetLen : usize, vocab : Vec<char>) -> WordGenerator {
-
+    fn new(target_len : usize, vocab : Vec<char>) -> WordGenerator {
         WordGenerator {
-            stringLen: targetLen,
-            counts: vec![0; targetLen],
+            counts: vec![0; target_len],
             vocab: vocab,
-            isStart: true
+            is_start: true
         }
     }
 }
@@ -38,9 +22,9 @@ impl Iterator for WordGenerator {
     type Item = String;
 
     fn next(&mut self) -> Option<String> {
-        if self.isStart {
-            self.isStart = false;
-            return Some(self.convertWord());
+        if self.is_start {
+            self.is_start = false;
+            return Some(self.convert_word());
         }
 
         let len = self.counts.len();
@@ -62,21 +46,7 @@ impl Iterator for WordGenerator {
         if all_full {
             None
         } else {
-            Some(self.convertWord())
-        }
-    }
-}
-
-impl Iterator for Counter {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<usize> {
-        self.count += 1;
-
-        if self.count < self.cmax {
-            Some(self.count)
-        } else {
-            None
+            Some(self.convert_word())
         }
     }
 }
@@ -86,7 +56,7 @@ fn main() {
     let mut cnt = 0;
 
     let counter = WordGenerator::new(6, vocab);
-    for i in counter {
+    for _i in counter {
         cnt += 1;
     }
 
