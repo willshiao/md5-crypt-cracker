@@ -4,6 +4,10 @@ use hex;
 use crypto::md5::Md5;
 use crypto::digest::Digest;
 
+use crypto_hash::{Algorithm, Hasher};
+use std::io::Write;
+
+
 struct WordGenerator {
     counts: Vec<usize>,
     vocab: Vec<char>,
@@ -58,39 +62,70 @@ impl Iterator for WordGenerator {
 }
 
 fn create_hash (data: &[u8], iterations: usize) -> [u8; 16] {
+    let mut output : [u8; 16] = [0; 16];
     let mut hasher = Md5::new();
-    let mut output = [0; 16];
-    
 
     for i in 0..iterations {
         if i == 0 {
             hasher.input(data);
         } else {
+            // println!("Using {} as input", hex::encode(&output));
             hasher.input(&output);
         }
         hasher.result(&mut output);
+        // println!("Result: {} at iteration #{}", hex::encode(&output), &i);
         hasher.reset();
     }
+    return output;
+}
+
+fn openssl_create_hash (data: &[u8], iterations: usize) -> Vec<u8> {
+    let mut output = vec![0; 16];
+
+    for i in 0..iterations {
+        let mut hasher = Hasher::new(Algorithm::MD5);
+        if i == 0 {
+            hasher.write_all(data);
+        } else {
+            hasher.write_all(&output);
+        }
+        output = hasher.finish();
+    }
+    
     return output;
 }
 
 fn main() {
     let vocab = vec!['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
     let mut cnt = 0;
-    let target = hex::decode("62aac4b5c341119bb71bd8e378bc7b8a").expect("Ooops");
+    let target = hex::decode("5681c3763ecd8a27cbead0b79fef20c8").expect("Ooops");
 
     // let output = [0; 16];
     // let mut hasher = Md5::new();
-    let counter = WordGenerator::new(5, vocab);
+    let counter = WordGenerator::new(4, vocab);
 
     for x in counter {
         
         // hasher.input(x.as_bytes());
 
         // hasher.result(&mut output);
-        if create_hash(x.as_bytes(), 1000) == &target[..] {
-            println!("Done w/ {}", x);
-        }
+        // println!("Trying {}", x);
+
+        // if create_hash(x.as_bytes(), 1000) == target[..] {
+        //     println!("Done w/ {}", x);
+        //     break;
+        // }
+
+        // asset()
+        // if openssl_create_hash(x.as_bytes(), 1000) == target {
+        //     println!("Done w/ {}", x);
+        //     break;
+        // }
+
+        // if openssl_create_hash(x.as_bytes(), 5) != create_hash(x.as_bytes(), 5) {
+        //     println!("MISMATCH!!!!");
+        // }
+
         // if format!("{:x}", md5::compute(&x)) == target {
         //     println!("Done w/ {}", x);
         // }
