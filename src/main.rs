@@ -4,10 +4,6 @@ use hex;
 use crypto::md5::Md5;
 use crypto::digest::Digest;
 
-use crypto_hash::{Algorithm, Hasher};
-use std::io::Write;
-
-
 struct WordGenerator {
     counts: Vec<usize>,
     vocab: Vec<char>,
@@ -79,22 +75,6 @@ fn create_hash (data: &[u8], iterations: usize) -> [u8; 16] {
     return output;
 }
 
-fn openssl_create_hash (data: &[u8], iterations: usize) -> Vec<u8> {
-    let mut output = vec![0; 16];
-
-    for i in 0..iterations {
-        let mut hasher = Hasher::new(Algorithm::MD5);
-        if i == 0 {
-            hasher.write_all(data);
-        } else {
-            hasher.write_all(&output);
-        }
-        output = hasher.finish();
-    }
-    
-    return output;
-}
-
 fn main() {
     let vocab = vec!['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
     let mut cnt = 0;
@@ -111,20 +91,10 @@ fn main() {
         // hasher.result(&mut output);
         // println!("Trying {}", x);
 
-        // if create_hash(x.as_bytes(), 1000) == target[..] {
-        //     println!("Done w/ {}", x);
-        //     break;
-        // }
-
-        // asset()
-        // if openssl_create_hash(x.as_bytes(), 1000) == target {
-        //     println!("Done w/ {}", x);
-        //     break;
-        // }
-
-        // if openssl_create_hash(x.as_bytes(), 5) != create_hash(x.as_bytes(), 5) {
-        //     println!("MISMATCH!!!!");
-        // }
+        if create_hash(x.as_bytes(), 1000) == target[..] {
+            println!("Done w/ {}", x);
+            break;
+        }
 
         // if format!("{:x}", md5::compute(&x)) == target {
         //     println!("Done w/ {}", x);
