@@ -46,10 +46,9 @@ fn work(
 
     let mut sent_cnt : u32 = 0;
     for i in counter {
-        s.send(Some(i.clone())).unwrap_or_else(|err| {
+        s.send(Some(i)).unwrap_or_else(|_err| {
             println!("Channel has died");
         });
-        bar.inc(1);
         sent_cnt += 1;
         if sent_cnt % 25000 == 0 {
             bar.inc(25000);
@@ -201,7 +200,7 @@ fn main() {
 
     // let n_workers = 7;
     let mut counter = doge::WordGenerator::new(6, vocab);
-    let (s, r) = bounded(user_creds.n_workers as usize);
+    let (s, r) = bounded(user_creds.n_workers as usize * 10000);
     work(s, r, &user_creds.n_workers, &mut counter);
 
     // let gen = doge::WordGenerator::new();
