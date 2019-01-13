@@ -1,11 +1,11 @@
 [package]
 name = "cs165_project1"
 version = "0.1.0"
-authors = ["Calvin <tacalvin123@gmail.com>"]
+authors = ["Calvin <tacalvin123@gmail.com>", "William Shiao <willshiao@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-md5 = "0.6.1"
 rust-crypto = "0.2.36"
 hex = "0.3.2"
 crossbeam-channel = "0.3.6"
+base64 = "0.10.0"

@@ -1,5 +1,6 @@
 #[allow(unused_imports)] use std::env;
 #[allow(unused_imports)] use std::process;
+
 pub struct WordGenerator {
     counts: Vec<usize>,
     vocab: Vec<char>,
