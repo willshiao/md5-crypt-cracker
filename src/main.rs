@@ -85,8 +85,10 @@ impl Md5Crypt {
         let pass_len = self.password.len();
         assert!(pass_len <= 16); // We assert this just in case
 
+        let alt_sum = self.alternate_sum();
         // Step 3.4: Append pass_len bytes of the alternate sum
-        hasher.input(&self.alternate_sum());
+        hasher.input(&alt_sum[..pass_len]);
+        println!("Alternate sum: {}", hex::encode(&alt_sum));
 
         let null_byte: [u8; 1] = [0; 1];
         let mut tmp: u8 = pass_len as u8;
@@ -107,37 +109,50 @@ impl Md5Crypt {
 
     fn hash (&self) -> [u8; 16] {
         let i0 = self.intermediate_sum();
+        println!("Intermediate sum: {}", hex::encode(&i0));
         let mut last_i = i0;
         let mut hasher = Md5::new();
+        let mut debug_vec: Vec<u8> = Vec::new();
 
-        for i in 1..1000 {
-            if i % 2 == 0 {
-                hasher.input(&last_i);
-            } else {
+        for i in 0..1000 {
+            if i & 1 == 1 {
                 hasher.input(&self.password);
+                debug_vec.extend(&self.password);
+            } else {
+                hasher.input(&last_i);
+                debug_vec.extend(&last_i);
             }
-            if i % 3 != 0 {
+            if i % 3 > 0 {
                 hasher.input(&self.salt);
+                debug_vec.extend(&self.salt);
             }
-            if i % 7 != 0 {
+            if i % 7 > 0 {
                 hasher.input(&self.password);
+                debug_vec.extend(&self.password);
             }
-            if i % 2 == 0 {
-                hasher.input(&self.password);
-            } else {
+            if i & 1 == 1 {
                 hasher.input(&last_i);
+                debug_vec.extend(&last_i);
+            } else {
+                hasher.input(&self.password);
+                debug_vec.extend(&self.password);
             }
             hasher.result(&mut last_i);
             hasher.reset();
+            if i < 10 || i > 990 {
+                println!("{}: Input: {}", i, hex::encode(&debug_vec));
+                println!("{}: {} of len {}", i, hex::encode(&last_i), debug_vec.len());
+            }
+            debug_vec.clear();
         }
 
-        return last_i;
+        return Md5Crypt::reorder_bytes(&last_i)
     }
 
     fn reorder_bytes (original: &[u8]) -> [u8; 16] {
         let mut output: [u8; 16] = [0; 16];
         for i in 0..BYTE_ORDERINGS.len() {
-            output[i] = output[BYTE_ORDERINGS[i]];
+            output[BYTE_ORDERINGS.len() - i - 1] = original[BYTE_ORDERINGS[i]];
         }
         return output;
     }
@@ -162,16 +177,34 @@ fn create_hash (data: &[u8], iterations: usize) -> [u8; 16] {
 }
 
 fn main() {
-    let user_creds = doge::UserCreds::parse_user_input();
+    let vocab = vec!['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
+    // let user_creds = doge::UserCreds::parse_user_input();
 
-
-    let vocab = vec!['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'];
-    let mut cnt = 0;
     // let n_workers = 7;
-    let mut counter = doge::WordGenerator::new(6, vocab);
-    let (s, r) = bounded(user_creds.n_workers as usize);
-    work(s, r, &user_creds.n_workers, &mut counter);
+    // let mut counter = doge::WordGenerator::new(6, vocab);
+    // let (s, r) = bounded(user_creds.n_workers as usize);
+    // work(s, r, &user_creds.n_workers, &mut counter);
 
-    println!("Total count: {}", cnt);
+    // let gen = doge::WordGenerator::new();
+    let pass = String::from("a");
+    let salt = String::from("bc");
+
+    let crypt = Md5Crypt::new(&pass, &salt);
+    let res = crypt.hash();
+    let output = base64::encode_config(&res, base64::CRYPT);
+    println!("Output: {}", output);
+    println!("Output (hex): {}", hex::encode(&res));
+
+    let input = base64::decode_config("HgqpXhm.E0eACNRZkZJa", base64::CRYPT);
+
+    match input {
+        Ok(input) => println!("Target: {}", hex::encode(input)),
+        Err(err) => {
+            panic!("There was an error: {:?}", err)
+        },
+    };
+    
+
+    // println!("Total count: {}", cnt);
     // println!("Last: {}", last);
 }
