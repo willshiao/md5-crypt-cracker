@@ -1,4 +1,5 @@
 extern crate crypto;
+extern crate base64;
 
 use hex;
 use crypto::md5::Md5;
@@ -49,8 +50,7 @@ fn work(s: crossbeam_channel::Sender<Option<String>> , r: crossbeam_channel::Rec
 struct Md5Crypt {
     password: Vec<u8>,
     salt: Vec<u8>,
-    magic: Vec<u8>,
-    hasher: Md5
+    magic: Vec<u8>
 }
 
 impl Md5Crypt {
@@ -58,8 +58,7 @@ impl Md5Crypt {
         Md5Crypt {
             password: password.as_bytes().to_vec(),
             salt: salt.as_bytes().to_vec(),
-            magic: "$1$".as_bytes().to_vec(),
-            hasher: Md5::new()
+            magic: "$1$".as_bytes().to_vec()
         }
     }
 
