@@ -32,7 +32,11 @@ fn work(
             loop {
                 match rx.recv().unwrap() {
                     Some(i) => {
-                        _c += 1;
+                        let hasher = Md5Crypt::new(&i, &String::from("abcabc"));
+                        let res = hasher.hash();
+                        if res == "abcdabcdabcdabcd".as_bytes() {
+                            break;
+                        }
                         continue;
                     }
                     None => {
@@ -54,7 +58,7 @@ fn work(
             bar.inc(25000);
         }
     }
-    for i in 0..*n_workers {
+    for _i in 0..*n_workers {
         s.send(None).unwrap_or_else(|err| {
             println!("Failed to send terminating signal to threads: {}", err);
         });
@@ -103,7 +107,7 @@ impl Md5Crypt {
         let alt_sum = self.alternate_sum();
         // Step 3.4: Append pass_len bytes of the alternate sum
         hasher.input(&alt_sum[..pass_len]);
-        println!("Alternate sum: {}", hex::encode(&alt_sum));
+        // println!("Alternate sum: {}", hex::encode(&alt_sum));
 
         let null_byte: [u8; 1] = [0; 1];
         let mut tmp: u8 = pass_len as u8;
@@ -124,41 +128,41 @@ impl Md5Crypt {
 
     fn hash(&self) -> [u8; 16] {
         let i0 = self.intermediate_sum();
-        println!("Intermediate sum: {}", hex::encode(&i0));
+        // println!("Intermediate sum: {}", hex::encode(&i0));
         let mut last_i = i0;
         let mut hasher = Md5::new();
-        let mut debug_vec: Vec<u8> = Vec::new();
+        // let mut debug_vec: Vec<u8> = Vec::new();
 
         for i in 0..1000 {
             if i & 1 == 1 {
                 hasher.input(&self.password);
-                debug_vec.extend(&self.password);
+                // debug_vec.extend(&self.password);
             } else {
                 hasher.input(&last_i);
-                debug_vec.extend(&last_i);
+                // debug_vec.extend(&last_i);
             }
             if i % 3 > 0 {
                 hasher.input(&self.salt);
-                debug_vec.extend(&self.salt);
+                // debug_vec.extend(&self.salt);
             }
             if i % 7 > 0 {
                 hasher.input(&self.password);
-                debug_vec.extend(&self.password);
+                // debug_vec.extend(&self.password);
             }
             if i & 1 == 1 {
                 hasher.input(&last_i);
-                debug_vec.extend(&last_i);
+                // debug_vec.extend(&last_i);
             } else {
                 hasher.input(&self.password);
-                debug_vec.extend(&self.password);
+                // debug_vec.extend(&self.password);
             }
             hasher.result(&mut last_i);
             hasher.reset();
             if i < 10 || i > 990 {
-                println!("{}: Input: {}", i, hex::encode(&debug_vec));
-                println!("{}: {} of len {}", i, hex::encode(&last_i), debug_vec.len());
+                // println!("{}: Input: {}", i, hex::encode(&debug_vec));
+                // println!("{}: {} of len {}", i, hex::encode(&last_i), debug_vec.len());
             }
-            debug_vec.clear();
+            // debug_vec.clear();
         }
 
         return Md5Crypt::reorder_bytes(&last_i);

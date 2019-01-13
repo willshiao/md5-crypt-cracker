@@ -1,20 +1,23 @@
 #[allow(unused_imports)] use std::env;
 #[allow(unused_imports)] use std::process;
+use smallvec::SmallVec;
 
 pub struct WordGenerator {
-    counts: Vec<usize>,
+    counts: SmallVec<[u8; 10]>,
     vocab: Vec<char>,
     is_start: bool
 }
 
 impl WordGenerator {
+    #[inline]
     fn convert_word(&self) -> String {
-        self.counts.iter().map(|x| self.vocab[*x]).collect()
+        self.counts.iter().map(|x| self.vocab[*x as usize]).collect()
     }
 
     pub fn new(target_len : usize, vocab : Vec<char>) -> WordGenerator {
         WordGenerator {
-            counts: vec![0; target_len],
+            // counts: vec![0; target_len],
+            counts: SmallVec::<[u8; 10]>::from_elem(0, target_len),
             vocab: vocab,
             is_start: true
         }
@@ -40,7 +43,7 @@ impl Iterator for WordGenerator {
         let mut all_full = false;
 
         for i in 1..len+1 {
-            if self.counts[len - i] < self.vocab.len() - 1 {
+            if (self.counts[len - i] as usize) < self.vocab.len() - 1 {
                 self.counts[len - i] += 1;
                 break;
             } else if i == len {
