@@ -9,6 +9,9 @@ use crossbeam_channel::bounded;
 mod doge;
 // use threadpool::ThreadPool;
 // use spmc;
+
+const BYTE_ORDERINGS: [usize; 16] = [11,4,10,5,3,9,15,2,8,14,1,7,13,0,6,12];
+
 fn work(s: crossbeam_channel::Sender<Option<String>> , r: crossbeam_channel::Receiver<Option<String>> , n_workers: &u32, counter: &mut doge::WordGenerator){
     for n in 0..*n_workers{
         let rx = r.clone();
@@ -51,7 +54,7 @@ struct Md5Crypt {
 }
 
 impl Md5Crypt {
-    fn new (password: &String, salt: &String, magic: &String) -> Md5Crypt {
+    fn new (password: &String, salt: &String) -> Md5Crypt {
         Md5Crypt {
             password: password.as_bytes().to_vec(),
             salt: salt.as_bytes().to_vec(),
@@ -130,6 +133,14 @@ impl Md5Crypt {
         }
 
         return last_i;
+    }
+
+    fn reorder_bytes (original: &[u8]) -> [u8; 16] {
+        let mut output: [u8; 16] = [0; 16];
+        for i in 0..BYTE_ORDERINGS.len() {
+            output[i] = output[BYTE_ORDERINGS[i]];
+        }
+        return output;
     }
 }
 
