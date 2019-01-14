@@ -14,19 +14,19 @@ use indicatif::ProgressStyle;
 use std::thread;
 
 fn work(
-    s: Sender<Option<String>>,
-    r: Receiver<Option<String>>,
-    n_workers: &u32,
+    s: &Sender<Option<String>>,
+    r: &Receiver<Option<String>>,
+    n_workers: u32,
     counter: &mut WordGenerator,
 ) {
-    let bar = ProgressBar::new(counter.get_size());
-    bar.set_style(
+    let pbar = ProgressBar::new(counter.get_size());
+    pbar.set_style(
         ProgressStyle::default_bar().template(
             "[{elapsed_precise}] {bar:50.cyan/blue} {pos:>7}/{len:7} {eta_precise} {msg}",
         ),
     );
 
-    for n in 0..*n_workers {
+    for n in 0..n_workers {
         let rx = r.clone();
         thread::spawn(move || {
             let mut _c = 0;
@@ -35,7 +35,7 @@ fn work(
                     Some(i) => {
                         let hasher = Md5Crypt::new(&i, &String::from("abcabc"));
                         let res = hasher.hash();
-                        if res == "abcdabcdabcdabcd".as_bytes() {
+                        if &res == b"abcdabcdabcdabcd" {
                             break;
                         }
                         continue;
@@ -56,15 +56,15 @@ fn work(
         });
         sent_cnt += 1;
         if sent_cnt % 25000 == 0 {
-            bar.inc(25000);
+            pbar.inc(25000);
         }
     }
-    for _i in 0..*n_workers {
+    for _i in 0..n_workers {
         s.send(None).unwrap_or_else(|err| {
             println!("Failed to send terminating signal to threads: {}", err);
         });
     }
-    bar.finish();
+    pbar.finish();
 }
 
 fn main() {
@@ -77,7 +77,7 @@ fn main() {
     // let n_workers = 7;
     let mut counter = WordGenerator::new(6, vocab);
     let (s, r) = bounded(user_creds.n_workers as usize * 10000);
-    work(s, r, &user_creds.n_workers, &mut counter);
+    work(&s, &r, user_creds.n_workers, &mut counter);
 
     // let gen = WordGenerator::new();
     // let pass = String::from("a");

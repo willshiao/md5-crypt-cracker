@@ -10,11 +10,11 @@ pub struct Md5Crypt {
 }
 
 impl Md5Crypt {
-    pub fn new(password: &String, salt: &String) -> Md5Crypt {
+    pub fn new(password: &str, salt: &str) -> Md5Crypt {
         Md5Crypt {
             password: password.as_bytes().to_vec(),
             salt: salt.as_bytes().to_vec(),
-            magic: "$1$".as_bytes().to_vec(),
+            magic: b"$1$".to_vec(),
         }
     }
 
@@ -60,7 +60,7 @@ impl Md5Crypt {
         }
         hasher.result(&mut output);
 
-        return output;
+        output
     }
 
     fn reorder_bytes(original: &[u8]) -> [u8; 16] {
@@ -68,7 +68,7 @@ impl Md5Crypt {
         for i in 0..BYTE_ORDERINGS.len() {
             output[BYTE_ORDERINGS.len() - i - 1] = original[BYTE_ORDERINGS[i]];
         }
-        return output;
+        output
     }
 
     pub fn hash(&self) -> [u8; 16] {
@@ -110,7 +110,7 @@ impl Md5Crypt {
             // debug_vec.clear();
         }
 
-        return Md5Crypt::reorder_bytes(&last_i);
+        Md5Crypt::reorder_bytes(&last_i)
     }
 }
 
@@ -129,5 +129,5 @@ pub fn create_hash(data: &[u8], iterations: usize) -> [u8; 16] {
         // println!("Result: {} at iteration #{}", hex::encode(&output), &i);
         hasher.reset();
     }
-    return output;
+    output
 }

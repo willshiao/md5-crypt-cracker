@@ -18,7 +18,7 @@ impl WordGenerator {
         WordGenerator {
             // counts: vec![0; target_len],
             counts: SmallVec::<[u8; 10]>::from_elem(0, target_len),
-            vocab: vocab,
+            vocab,
             is_start: true
         }
     }
@@ -42,14 +42,14 @@ impl Iterator for WordGenerator {
         let len = self.counts.len();
         let mut all_full = false;
 
-        for i in 1..len+1 {
+        for i in 1..=len {
             if (self.counts[len - i] as usize) < self.vocab.len() - 1 {
                 self.counts[len - i] += 1;
                 break;
             } else if i == len {
                 all_full = true;
             } else {
-                for j in 1..i + 1 {
+                for j in 1..=i {
                     self.counts[len - j] = 0;
                 }
             }
