@@ -12,6 +12,9 @@ use hex;
 use indicatif::ProgressBar;
 use indicatif::ProgressStyle;
 use std::thread;
+use std::str;
+
+const B64_ALPH: [char; 64] = ['.','/','0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
 
 fn work(
     s: &Sender<Option<String>>,
@@ -35,9 +38,9 @@ fn work(
                     Some(i) => {
                         let hasher = Md5Crypt::new(&i, &String::from("abcabc"));
                         let res = hasher.hash();
-                        if &res == b"abcdabcdabcdabcd" {
-                            break;
-                        }
+                        // if &res == b"abcdabcdabcdabcd" {
+                        //     break;
+                        // }
                         continue;
                     }
                     None => {
@@ -72,21 +75,23 @@ fn main() {
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
         's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     ];
-    let user_creds = UserCreds::parse_user_input();
+    // let user_creds = UserCreds::parse_user_input();
 
     // let n_workers = 7;
-    let mut counter = WordGenerator::new(6, vocab);
-    let (s, r) = bounded(user_creds.n_workers as usize * 10000);
-    work(&s, &r, user_creds.n_workers, &mut counter);
+    // let mut counter = WordGenerator::new(6, vocab);
+    // let (s, r) = bounded(user_creds.n_workers as usize * 10000);
+    // work(&s, &r, user_creds.n_workers, &mut counter);
 
     // let gen = WordGenerator::new();
-    // let pass = String::from("a");
-    // let salt = String::from("bc");
+    let pass = String::from("a");
+    let salt = String::from("bc");
 
-    // let crypt = Md5Crypt::new(&pass, &salt);
-    // let res = crypt.hash();
+    let crypt = Md5Crypt::new(&pass, &salt);
+    let res = crypt.hash();
+
     // let output = base64::encode_config(&res, base64::CRYPT);
-    // println!("Output: {}", output);
+    let output: String = res.into_iter().map(|x| B64_ALPH[*x as usize]).collect();
+    println!("Output: {}", &output);
     // println!("Output (hex): {}", hex::encode(&res));
 
     // let input = base64::decode_config("HgqpXhm.E0eACNRZkZJa", base64::CRYPT);
