@@ -10,10 +10,10 @@ pub struct Md5Crypt {
 }
 
 impl Md5Crypt {
-    pub fn new(password: &str, salt: &str) -> Md5Crypt {
+    pub fn new(password: &str, salt: &[u8]) -> Md5Crypt {
         Md5Crypt {
             password: password.as_bytes().to_vec(),
-            salt: salt.as_bytes().to_vec(),
+            salt: salt.to_vec(),
             magic: [36, 49, 36], // $1$
         }
     }

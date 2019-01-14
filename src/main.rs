@@ -12,7 +12,6 @@ use hex;
 use indicatif::ProgressBar;
 use indicatif::ProgressStyle;
 use std::thread;
-use std::str;
 
 const B64_ALPH: [char; 64] = ['.','/','0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
 
@@ -21,6 +20,8 @@ fn work(
     r: &Receiver<Option<String>>,
     n_workers: u32,
     counter: &mut WordGenerator,
+    pass_bytes: &'static str,
+    salt_bytes: &'static [u8]
 ) {
     let pbar = ProgressBar::new(counter.get_size());
     pbar.set_style(
@@ -32,15 +33,22 @@ fn work(
     for n in 0..n_workers {
         let rx = r.clone();
         thread::spawn(move || {
+            let pass: Vec<u8> = pass_bytes.chars()
+                .map(|x| B64_ALPH.iter().position(|&y| y == x).unwrap() as u8)
+                .collect();
+            // println!("Hash bytes: {}", hex::encode(&pass));
             let mut _c = 0;
+
             loop {
                 match rx.recv().unwrap() {
                     Some(i) => {
-                        let hasher = Md5Crypt::new(&i, &String::from("abcabc"));
+                        // println!("Trying: {}", &i);
+                        let hasher = Md5Crypt::new(&i, &salt_bytes);
                         let res = hasher.hash();
-                        // if &res == b"abcdabcdabcdabcd" {
-                        //     break;
-                        // }
+                        if pass == res {
+                            println!("Found password!: {}", i);
+                            break;
+                        }
                         continue;
                     }
                     None => {
@@ -62,6 +70,8 @@ fn work(
             pbar.inc(25000);
         }
     }
+    println!("Done producing combinations!");
+
     for _i in 0..n_workers {
         s.send(None).unwrap_or_else(|err| {
             println!("Failed to send terminating signal to threads: {}", err);
@@ -75,23 +85,42 @@ fn main() {
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
         's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
     ];
-    // let user_creds = UserCreds::parse_user_input();
+    let user_creds = UserCreds::parse_user_input();
 
-    // let n_workers = 7;
-    // let mut counter = WordGenerator::new(6, vocab);
-    // let (s, r) = bounded(user_creds.n_workers as usize * 10000);
-    // work(&s, &r, user_creds.n_workers, &mut counter);
+    let mut counter = WordGenerator::new(3, vocab);
+    let (s, r) = bounded(user_creds.n_workers as usize);
+    
+    // let salt_str = user_creds.salt.clone();
+    // let salt_bytes = salt_str.as_bytes();
+    let salt_bytes = b"bc";
+    // let pass_bytes = b"zxf"
+    let pass = "G6.tuH9WIevsLjCZz7y.J.";
+    // Slow O(26 * n) op, but we're only doing it once anyways
+    // let pass_bytes: <Vec<u8> = b"abc".chars()
+    //     .map(|x| B64_ALPH.iter().position(|&y| y == x).unwrap() as u8)
+    //     .collect()
+
+    work(&s, &r, user_creds.n_workers, &mut counter, &pass, salt_bytes);
 
     // let gen = WordGenerator::new();
-    let pass = String::from("a");
-    let salt = String::from("bc");
+    // let pass = String::from("a");
+    // let salt = String::from("bc");
 
-    let crypt = Md5Crypt::new(&pass, &salt);
-    let res = crypt.hash();
+    // let crypt = Md5Crypt::new("zfd", salt_bytes);
+    // let res = crypt.hash();
+
+    // let hbytes: Vec<u8> = pass.chars()
+    //             .map(|x| B64_ALPH.iter().position(|&y| y == x).unwrap() as u8)
+    //             .collect();
+
+    // println!("Got output: {}", hex::encode(res));
+    // if hbytes == res {
+    //     println!("Match found!");
+    // }
 
     // let output = base64::encode_config(&res, base64::CRYPT);
-    let output: String = res.into_iter().map(|x| B64_ALPH[*x as usize]).collect();
-    println!("Output: {}", &output);
+    // let output: String = res.into_iter().map(|x| B64_ALPH[*x as usize]).collect();
+    // println!("Output: {}", &output);
     // println!("Output (hex): {}", hex::encode(&res));
 
     // let input = base64::decode_config("HgqpXhm.E0eACNRZkZJa", base64::CRYPT);
