@@ -49,10 +49,9 @@ impl<'a> Md5Crypt<'a> {
     fn b64_single(a: u8, output_arr: &mut [u8]) {
         let mut input = a;
 
-        for i in 0..2 {
-            output_arr[i] = (input & 0x3F) as u8;
-            input >>= 6;
-        }
+        output_arr[0] = (input & 0x3F) as u8;
+        input >>= 6;
+        output_arr[1] = (input & 0x3F) as u8;
     }
 
     fn intermediate_sum(&self) -> [u8; 16] {

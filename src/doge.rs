@@ -1,7 +1,6 @@
 use smallvec::SmallVec;
 #[allow(unused_imports)]
 use std::env;
-#[allow(unused_imports)]
 use std::process;
 
 pub struct WordGenerator {

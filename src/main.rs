@@ -13,6 +13,7 @@ use indicatif::ProgressBar;
 use indicatif::ProgressStyle;
 use smallvec::SmallVec;
 use std::thread;
+use std::process;
 
 const B64_ALPH: [char; 64] = ['.','/','0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
 
@@ -49,7 +50,7 @@ fn work(
                         if pass == res {
                             let out = std::str::from_utf8(&i).unwrap();
                             println!("Found password!: {}", &out);
-                            break;
+                            process::exit(0);
                         }
                         continue;
                     }
@@ -85,14 +86,14 @@ fn work(
 fn main() {
     let user_creds = UserCreds::parse_user_input();
 
-    let mut counter = WordGenerator::new(6);
+    let mut counter = WordGenerator::new(4);
     let (s, r) = bounded(user_creds.n_workers as usize);
     
     // let salt_str = user_creds.salt.clone();
     // let salt_bytes = salt_str.as_bytes();
 
     let salt_bytes = b"hfT7jp2q";
-    let pass = "HtyOYVTSrJkX3GxpxXJY50";
+    let pass = "TZLewegC4aKO6Mv/lQFO00";
 
     // Slow O(26 * n) op, but we're only doing it once anyways
     // let pass_bytes: <Vec<u8> = b"abc".chars()
