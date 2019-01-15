@@ -11,13 +11,14 @@ use crossbeam_channel::{bounded, Receiver, Sender};
 use hex;
 use indicatif::ProgressBar;
 use indicatif::ProgressStyle;
+use smallvec::SmallVec;
 use std::thread;
 
 const B64_ALPH: [char; 64] = ['.','/','0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
 
 fn work(
-    s: &Sender<Option<String>>,
-    r: &Receiver<Option<String>>,
+    s: &Sender<Option<SmallVec<[u8; 10]>>>,
+    r: &Receiver<Option<SmallVec<[u8; 10]>>>,
     n_workers: u32,
     counter: &mut WordGenerator,
     pass_bytes: &'static str,
@@ -46,7 +47,8 @@ fn work(
                         let hasher = Md5Crypt::new(&i, &salt_bytes);
                         let res = hasher.hash();
                         if pass == res {
-                            println!("Found password!: {}", i);
+                            let out = std::str::from_utf8(&i).unwrap();
+                            println!("Found password!: {}", &out);
                             break;
                         }
                         continue;
@@ -81,20 +83,17 @@ fn work(
 }
 
 fn main() {
-    let vocab = vec![
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
-        's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    ];
     let user_creds = UserCreds::parse_user_input();
 
-    let mut counter = WordGenerator::new(3, vocab);
+    let mut counter = WordGenerator::new(6);
     let (s, r) = bounded(user_creds.n_workers as usize);
     
     // let salt_str = user_creds.salt.clone();
     // let salt_bytes = salt_str.as_bytes();
-    let salt_bytes = b"bc";
-    // let pass_bytes = b"zxf"
-    let pass = "G6.tuH9WIevsLjCZz7y.J.";
+
+    let salt_bytes = b"hfT7jp2q";
+    let pass = "HtyOYVTSrJkX3GxpxXJY50";
+
     // Slow O(26 * n) op, but we're only doing it once anyways
     // let pass_bytes: <Vec<u8> = b"abc".chars()
     //     .map(|x| B64_ALPH.iter().position(|&y| y == x).unwrap() as u8)

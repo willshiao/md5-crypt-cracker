@@ -1,29 +1,38 @@
 use crypto::digest::Digest;
 use crypto::md5::Md5;
+use smallvec::SmallVec;
 
 const BYTE_ORDERINGS: [usize; 16] = [11, 4, 10, 5, 3, 9, 15, 2, 8, 14, 1, 7, 13, 0, 6, 12];
 
-pub struct Md5Crypt {
-    password: Vec<u8>,
-    salt: Vec<u8>,
+pub struct Md5Crypt<'a> {
+    password: &'a SmallVec<[u8; 10]>,
+    salt: &'a [u8],
+    // salt: Vec<u8>,
     magic: [u8; 3],
 }
 
-impl Md5Crypt {
-    pub fn new(password: &str, salt: &[u8]) -> Md5Crypt {
+impl<'a> Md5Crypt<'a> {
+    pub fn new(password: &'a SmallVec<[u8; 10]>, salt: &'a [u8]) -> Md5Crypt<'a> {
         Md5Crypt {
-            password: password.as_bytes().to_vec(),
-            salt: salt.to_vec(),
+            // password: password.as_bytes().to_vec(),
+            password,
+            // salt: salt.to_vec(),
+            salt,
             magic: [36, 49, 36], // $1$
         }
     }
 
+    #[inline]
     fn alternate_sum(&self) -> [u8; 16] {
-        let mut all = self.password.clone();
-        all.extend(&self.salt);
-        all.extend(&self.password);
+        let mut hasher = Md5::new();
+        let mut output: [u8; 16] = [0; 16];
 
-        create_hash(&all[..], 1)
+        hasher.input(&self.password);
+        hasher.input(&self.salt);
+        hasher.input(&self.password);
+
+        hasher.result(&mut output);
+        output
     }
 
     #[inline]
