@@ -7,19 +7,12 @@ pub struct WordGenerator {
     counts: SmallVec<[u8; 10]>,
     start_byte: u8,
     end_byte: u8,
-    // vocab: Vec<char>,
     is_start: bool,
 }
 
 impl WordGenerator {
-    // #[inline]
-    // fn convert_word(&self) -> String {
-    //     self.counts.iter().map(|x| self.vocab[*x as usize]).collect()
-    // }
-
     pub fn new(target_len: usize) -> WordGenerator {
         WordGenerator {
-            // counts: vec![0; target_len],
             counts: SmallVec::<[u8; 10]>::from_elem(97, target_len),
             start_byte: 97,
             end_byte: 122,
@@ -28,11 +21,11 @@ impl WordGenerator {
     }
 
     pub fn get_size(&self) -> u64 {
-        let vsize: u64 = if self.end_byte > self.start_byte {
+        let vsize: u64 = u64::from(if self.end_byte > self.start_byte {
                 self.end_byte - self.start_byte
             } else {
                 self.start_byte - self.end_byte
-            } as u64;
+            });
         let csize: u32 = self.counts.len() as u32;
         vsize.pow(csize)
     }
@@ -77,9 +70,10 @@ pub struct UserCreds {
 }
 
 impl UserCreds {
-    fn new(args: &[String]) -> Result<UserCreds, &'static str> {
+    fn new(args: &[String]) -> UserCreds {
         if args.len() < 4 {
-            return Err("Not Enough Args");
+            println!("Not enough arguments");
+            process::exit(1);
         }
 
         let password = args[1].clone();
@@ -91,17 +85,14 @@ impl UserCreds {
                 process::exit(1);
             }
         };
-        Ok(UserCreds {
+        UserCreds {
             password,
             salt,
             n_workers,
-        })
+        }
     }
     pub fn parse_user_input() -> UserCreds {
         let user_args: Vec<String> = env::args().collect();
-        UserCreds::new(&user_args).unwrap_or_else(|err| {
-            println!("Failed to parse arguments: {}", err);
-            process::exit(1);
-        })
+        UserCreds::new(&user_args)
     }
 }

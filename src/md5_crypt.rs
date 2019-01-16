@@ -2,21 +2,16 @@ use crypto::digest::Digest;
 use crypto::md5::Md5;
 use smallvec::SmallVec;
 
-const BYTE_ORDERINGS: [usize; 16] = [11, 4, 10, 5, 3, 9, 15, 2, 8, 14, 1, 7, 13, 0, 6, 12];
-
 pub struct Md5Crypt<'a> {
     password: &'a SmallVec<[u8; 10]>,
     salt: &'a [u8],
-    // salt: Vec<u8>,
     magic: [u8; 3],
 }
 
 impl<'a> Md5Crypt<'a> {
     pub fn new(password: &'a SmallVec<[u8; 10]>, salt: &'a [u8]) -> Md5Crypt<'a> {
         Md5Crypt {
-            // password: password.as_bytes().to_vec(),
             password,
-            // salt: salt.to_vec(),
             salt,
             magic: [36, 49, 36], // $1$
         }
@@ -37,12 +32,16 @@ impl<'a> Md5Crypt<'a> {
 
     #[inline]
     fn b64_triplet(a: u8, b: u8, c: u8, output_arr: &mut [u8]) {
-        let mut orig: u32 = (((a as u32) << 16) | ((b as u32) << 8) | (c as u32)) as u32;
+        let mut orig: u32 = ((u32::from(a) << 16) | (u32::from(b) << 8) | u32::from(c)) as u32;
 
-        for i in 0..4 {
-            output_arr[i] = (orig & 0x3F) as u8;
+        for output in output_arr.iter_mut().take(4) {
+            *output = (orig & 0x3F) as u8;
             orig >>= 6;
         }
+        // for i in 0..4 {
+        //     output_arr[i] = (orig & 0x3F) as u8;
+        //     orig >>= 6;
+        // }
     }
 
     #[inline]
@@ -72,7 +71,6 @@ impl<'a> Md5Crypt<'a> {
         let alt_sum = self.alternate_sum();
         // Step 3.4: Append pass_len bytes of the alternate sum
         hasher.input(&alt_sum[..pass_len]);
-        // println!("Alternate sum: {}", hex::encode(&alt_sum));
 
         let null_byte: [u8; 1] = [0; 1];
         let mut tmp: u8 = pass_len as u8;
@@ -91,51 +89,32 @@ impl<'a> Md5Crypt<'a> {
         output
     }
 
-    fn reorder_bytes(original: &[u8]) -> [u8; 16] {
-        let mut output: [u8; 16] = [0; 16];
-        for i in 0..BYTE_ORDERINGS.len() {
-            output[BYTE_ORDERINGS.len() - i - 1] = original[BYTE_ORDERINGS[i]];
-        }
-        output
-    }
-
     pub fn hash(&self) -> [u8; 22] {
         let i0 = self.intermediate_sum();
-        // println!("Intermediate sum: {}", hex::encode(&i0));
         let mut last_i = i0;
         let mut hasher = Md5::new();
-        // let mut debug_vec: Vec<u8> = Vec::new();
 
         for i in 0..1000 {
             if i & 1 == 1 {
                 hasher.input(&self.password);
-            // debug_vec.extend(&self.password);
             } else {
                 hasher.input(&last_i);
-                // debug_vec.extend(&last_i);
             }
             if i % 3 > 0 {
                 hasher.input(&self.salt);
-                // debug_vec.extend(&self.salt);
             }
             if i % 7 > 0 {
                 hasher.input(&self.password);
-                // debug_vec.extend(&self.password);
             }
             if i & 1 == 1 {
                 hasher.input(&last_i);
-            // debug_vec.extend(&last_i);
             } else {
                 hasher.input(&self.password);
-                // debug_vec.extend(&self.password);
             }
             hasher.result(&mut last_i);
             hasher.reset();
             if i < 10 || i > 990 {
-                // println!("{}: Input: {}", i, hex::encode(&debug_vec));
-                // println!("{}: {} of len {}", i, hex::encode(&last_i), debug_vec.len());
             }
-            // debug_vec.clear();
         }
 
         // [11, 4, 10, 5, 3, 9, 15, 2, 8, 14, 1, 7, 13, 0, 6, 12];
@@ -148,24 +127,5 @@ impl<'a> Md5Crypt<'a> {
         Md5Crypt::b64_single(last_i[11], &mut output[20..]);
 
         output
-        // Md5Crypt::reorder_bytes(&last_i)
     }
-}
-
-pub fn create_hash(data: &[u8], iterations: usize) -> [u8; 16] {
-    let mut output: [u8; 16] = [0; 16];
-    let mut hasher = Md5::new();
-
-    for i in 0..iterations {
-        if i == 0 {
-            hasher.input(data);
-        } else {
-            // println!("Using {} as input", hex::encode(&output));
-            hasher.input(&output);
-        }
-        hasher.result(&mut output);
-        // println!("Result: {} at iteration #{}", hex::encode(&output), &i);
-        hasher.reset();
-    }
-    output
 }

@@ -35,16 +35,15 @@ fn work(
     for n in 0..n_workers {
         let rx = r.clone();
         thread::spawn(move || {
+            // Slowish O(26 * n) op, but we're only doing it once per thread anyways
             let pass: Vec<u8> = pass_bytes.chars()
                 .map(|x| B64_ALPH.iter().position(|&y| y == x).unwrap() as u8)
                 .collect();
-            // println!("Hash bytes: {}", hex::encode(&pass));
             let mut _c = 0;
 
             loop {
                 match rx.recv().unwrap() {
                     Some(i) => {
-                        // println!("Trying: {}", &i);
                         let hasher = Md5Crypt::new(&i, &salt_bytes);
                         let res = hasher.hash();
                         if pass == res {
@@ -89,49 +88,8 @@ fn main() {
     let mut counter = WordGenerator::new(4);
     let (s, r) = bounded(user_creds.n_workers as usize);
     
-    // let salt_str = user_creds.salt.clone();
-    // let salt_bytes = salt_str.as_bytes();
-
     let salt_bytes = b"hfT7jp2q";
-    let pass = "TZLewegC4aKO6Mv/lQFO00";
-
-    // Slow O(26 * n) op, but we're only doing it once anyways
-    // let pass_bytes: <Vec<u8> = b"abc".chars()
-    //     .map(|x| B64_ALPH.iter().position(|&y| y == x).unwrap() as u8)
-    //     .collect()
+    let pass = ".UQltDtgtwkn6KFzDgD8b1";
 
     work(&s, &r, user_creds.n_workers, &mut counter, &pass, salt_bytes);
-
-    // let gen = WordGenerator::new();
-    // let pass = String::from("a");
-    // let salt = String::from("bc");
-
-    // let crypt = Md5Crypt::new("zfd", salt_bytes);
-    // let res = crypt.hash();
-
-    // let hbytes: Vec<u8> = pass.chars()
-    //             .map(|x| B64_ALPH.iter().position(|&y| y == x).unwrap() as u8)
-    //             .collect();
-
-    // println!("Got output: {}", hex::encode(res));
-    // if hbytes == res {
-    //     println!("Match found!");
-    // }
-
-    // let output = base64::encode_config(&res, base64::CRYPT);
-    // let output: String = res.into_iter().map(|x| B64_ALPH[*x as usize]).collect();
-    // println!("Output: {}", &output);
-    // println!("Output (hex): {}", hex::encode(&res));
-
-    // let input = base64::decode_config("HgqpXhm.E0eACNRZkZJa", base64::CRYPT);
-
-    // match input {
-    //     Ok(input) => println!("Target: {}", hex::encode(input)),
-    //     Err(err) => {
-    //         panic!("There was an error: {:?}", err)
-    //     },
-    // };
-
-    // println!("Total count: {}", cnt);
-    // println!("Last: {}", last);
 }
