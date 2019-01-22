@@ -14,6 +14,7 @@ use indicatif::ProgressStyle;
 use smallvec::SmallVec;
 use std::thread;
 use std::process;
+use std::time::Instant;
 
 const B64_ALPH: [char; 64] = ['.','/','0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'];
 
@@ -31,6 +32,7 @@ fn work(
             "[{elapsed_precise}] {bar:50.cyan/blue} {pos:>7}/{len:7} {eta_precise} {msg}",
         ),
     );
+    let now = Instant::now();
 
     for n in 0..n_workers {
         let rx = r.clone();
@@ -63,6 +65,7 @@ fn work(
     }
 
     let mut sent_cnt: u32 = 0;
+    let total_size = counter.get_size();
     for i in counter {
         s.send(Some(i)).unwrap_or_else(|_err| {
             println!("Channel has died");
@@ -72,14 +75,18 @@ fn work(
             pbar.inc(25000);
         }
     }
+    let elapsed = now.elapsed();
+    let sec = (elapsed.as_secs() as f64) + (elapsed.subsec_nanos() as f64 / 1000_000_000.0);
     println!("Done producing combinations!");
+    println!("Seconds Elapsed: {}", sec);
+    println!("Hashes per second: {}", total_size as f64 / sec);
 
     for _i in 0..n_workers {
         s.send(None).unwrap_or_else(|err| {
             println!("Failed to send terminating signal to threads: {}", err);
         });
     }
-    pbar.finish();
+    // pbar.finish();
 }
 
 fn main() {
