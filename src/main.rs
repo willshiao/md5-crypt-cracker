@@ -85,11 +85,11 @@ fn work(
 fn main() {
     let user_creds = UserCreds::parse_user_input();
 
-    let mut counter = WordGenerator::new(4);
+    let mut counter = WordGenerator::new(6);
     let (s, r) = bounded(user_creds.n_workers as usize);
     
     let salt_bytes = b"hfT7jp2q";
-    let pass = ".UQltDtgtwkn6KFzDgD8b1";
+    let pass = "/sDfNdP2e3OCxg2zGq1FK0";
 
     work(&s, &r, user_creds.n_workers, &mut counter, &pass, salt_bytes);
 }
